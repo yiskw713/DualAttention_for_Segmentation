@@ -1,0 +1,26 @@
+model: drn_d_22
+attention: False
+
+class_weight: True    # if you use class weight to calculate cross entropy or not
+writer_flag: True      # if you use tensorboardx or not
+
+n_classes: 21         # including background class
+batch_size: 32
+crop_height: 300
+crop_width: 300
+height: 256
+width: 256
+num_workers: 4
+max_epoch: 300
+
+optimizer: AdaBound
+learning_rate: 0.001
+lr_patience: 10       # Patience of LR scheduler
+momentum: 0.9         # momentum of SGD
+dampening: 0.0        # dampening for momentum of SGD
+weight_decay: 0.001   # weight decay for SGD
+nesterov: True        # enables Nesterov momentum
+
+dataset_dir: /media/yuchi/ssd4t/dataset/VOCdevkit
+year: 2012 # pascal voc 2007 or 2012
+result_path: ./result/drn_d_22

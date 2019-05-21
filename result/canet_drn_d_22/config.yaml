@@ -1,5 +1,5 @@
 model: drn_d_22
-attention: dual
+attention: channel
 
 class_weight: True    # if you use class weight to calculate cross entropy or not
 writer_flag: True      # if you use tensorboardx or not
@@ -24,4 +24,4 @@ final_lr: 0.1         # final learning rate for AdaBound
 
 dataset_dir: /media/yuchi/ssd4t/dataset/VOCdevkit
 year: 2012 # pascal voc 2007 or 2012
-result_path: ./result/danet_drn_d_22
+result_path: ./result/canet_drn_d_22

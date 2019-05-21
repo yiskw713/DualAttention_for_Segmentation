@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 
 from model.danet import DANet
+from model.canet import CANet
 from model.drn import drn_d_22, drn_d_38
 from utils.checkpoint import save_checkpoint, resume
 from utils.class_weight import get_class_weight
@@ -31,7 +32,7 @@ def get_arguments():
     parser = argparse.ArgumentParser(
         description='semantic segmentation using PASCAL VOC')
     parser.add_argument('config', type=str, help='path of a config file')
-    parser.add_argument('--resume', type=bool, default=False,
+    parser.add_argument('--resume', action='store_true',
                         help='if you start training from checkpoint')
 
     return parser.parse_args()
@@ -56,7 +57,7 @@ def train(model, train_loader, criterion, optimizer, config, device):
         _, _, H, W = x.shape
 
         h = model(x)
-        if config.attention:
+        if config.attention == 'dual':
             loss = 0.0
             for weighted_h in h:
                 weighted_h = F.interpolate(
@@ -93,7 +94,7 @@ def validation(model, test_loader, criterion, config, device):
         with torch.no_grad():
             h = model(x)
 
-            if config.attention:
+            if config.attention == 'dual':
                 loss = 0.0
                 for weighted_h in h:
                     weighted_h = F.interpolate(
@@ -150,7 +151,7 @@ def main():
         CONFIG,
         mode="train",
         transform=Compose([
-            # RandomCrop(CONFIG),
+            RandomCrop(CONFIG),
             Resize(CONFIG),
             RandomFlip(),
             ToTensor(),
@@ -162,7 +163,7 @@ def main():
         CONFIG,
         mode="val",
         transform=Compose([
-            # RandomCrop(CONFIG),
+            RandomCrop(CONFIG),
             Resize(CONFIG),
             ToTensor(),
             Normalize(mean=get_mean(), std=get_std()),
@@ -187,9 +188,12 @@ def main():
     # load model
     print('\n------------------------Loading Model------------------------\n')
 
-    if CONFIG.attention:
+    if CONFIG.attention == 'dual':
         model = DANet(CONFIG)
         print('Dual Attintion modules will be added to this base model')
+    elif CONFIG.attention == 'channel':
+        model = CANet(CONFIG)
+        print('Channel Attintion modules will be added to this base model')
     else:
         if CONFIG.model == 'drn_d_22':
             print(
@@ -243,18 +247,21 @@ def main():
     else:
         scheduler = None
 
-    # resume if you want
-    begin_epoch = 0
-    if args.resume:
-        begin_epoch, model, optimizer, scheduler = \
-            resume(CONFIG, model, optimizer, scheduler)
-
     # send the model to cuda/cpu
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model.to(device)
     if device == 'cuda':
         model = torch.nn.DataParallel(model)  # make parallel
         torch.backends.cudnn.benchmark = True
+
+    # resume if you want
+    begin_epoch = 0
+    if args.resume:
+        if os.path.exists(os.path.join(CONFIG.result_path, 'checkpoint.pth')):
+            print('loading the checkpoint...')
+            begin_epoch, model, optimizer, scheduler = \
+                resume(CONFIG, model, optimizer, scheduler)
+            print('training will start from {} epoch'.format(begin_epoch))
 
     # criterion for loss
     if CONFIG.class_weight:

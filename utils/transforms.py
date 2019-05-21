@@ -19,22 +19,22 @@ class RandomCrop(object):
         label = sample['label']
 
         W, H = image.size
-        print('original', image.size)
-        if H < self.config.height:
-            delta_height = self.config.height - H
-            image = transforms.functional.pad(
-                image, (0, delta_height - delta_height//2), fill=self.mean)
-            label = transforms.functional.pad(
-                label, (0, delta_height - delta_height//2), fill=255)
+        delta_height = max(self.config.crop_height - H, 0)
+        delta_width = max(self.config.crop_width - W, 0)
 
-        if W < self.config.width:
-            delta_width = self.config.width - W
-            image = transforms.functional.pad(
-                image, (delta_width - delta_width // 2, 0), fill=self.mean)
-            label = transforms.functional.pad(
-                label, (delta_width - delta_width // 2, 0), fill=255)
+        # Padding
+        image = transforms.functional.pad(
+            image,
+            (delta_width - delta_width // 2, delta_height - delta_height//2),
+            fill=self.mean
+        )
+        label = transforms.functional.pad(
+            label,
+            (delta_width - delta_width // 2, delta_height - delta_height//2),
+            fill=255
+        )
 
-        print('padded', image.size)
+        # Crop
         i, j, h, w = transforms.RandomCrop.get_params(
             image, (self.config.crop_height, self.config.crop_width))
         image = transforms.functional.crop(image, i, j, h, w)

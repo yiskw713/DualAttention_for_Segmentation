@@ -51,6 +51,7 @@ momentum: 0.9         # momentum of SGD
 dampening: 0.0        # dampening for momentum of SGD
 weight_decay: 0.001   # weight decay for SGD
 nesterov: True        # enables Nesterov momentum
+final_lr: 0.1         # final learning rate for AdaBound
 
 dataset_dir: /xxxx/xxxx/xxxx/VOCdevkit
 year: 2012 # pascal voc 2007 or 2012
